@@ -131,7 +131,7 @@ struct demod_state
 	int      downsample;    /* min 1, max 256 */
 	int      post_downsample;
 	int      output_scale;
-	int      squelch_level, conseq_squelch, squelch_hits, terminate_on_squelch;
+	int      squelch_level, conseq_squelch, squelch_hits, terminate_on_squelch, null_squelch;
 	int      downsample_passes;
 	int      comp_fir_size;
 	int      custom_atan;
@@ -205,6 +205,7 @@ void usage(void)
 		"\t    dc:     enable dc blocking filter\n"
 		"\t    deemp:  enable de-emphasis filter\n"
 		"\t    direct: enable direct sampling\n"
+		"\t    nullsquelch: output null padding when squelched\n"
 		"\t    offset: enable offset tuning\n"
 		"\tfilename ('-' means stdout)\n"
 		"\t    omitting the filename also uses stdout\n\n"
@@ -813,6 +814,7 @@ static void *dongle_thread_fn(void *arg)
 
 static void *demod_thread_fn(void *arg)
 {
+	int i;
 	struct demod_state *d = arg;
 	struct output_state *o = d->output_target;
 	while (!do_exit) {
@@ -826,7 +828,9 @@ static void *demod_thread_fn(void *arg)
 		if (d->squelch_level && d->squelch_hits > d->conseq_squelch) {
 			d->squelch_hits = d->conseq_squelch + 1;  /* hair trigger */
 			safe_cond_signal(&controller.hop, &controller.hop_m);
-			continue;
+			if (!d->null_squelch) {
+				continue;
+			}
 		}
 		pthread_rwlock_wrlock(&o->rw);
 		memcpy(o->result, d->result, 2*d->result_len);
@@ -1106,6 +1110,8 @@ int main(int argc, char **argv)
 				demod.deemph = 1;}
 			if (strcmp("direct",  optarg) == 0) {
 				dongle.direct_sampling = 1;}
+			if (strcmp("nullsquelch",  optarg) == 0) {
+				demod.null_squelch = 1;}	
 			if (strcmp("offset",  optarg) == 0) {
 				dongle.offset_tuning = 1;}
 			break;
