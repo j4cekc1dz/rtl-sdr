@@ -209,12 +209,47 @@ int verbose_gain_set(rtlsdr_dev_t *dev, int gain)
 		fprintf(stderr, "WARNING: Failed to enable manual gain.\n");
 		return r;
 	}
+
 	r = rtlsdr_set_tuner_gain(dev, gain);
 	if (r != 0) {
 		fprintf(stderr, "WARNING: Failed to set tuner gain.\n");
 	} else {
 		fprintf(stderr, "Tuner gain set to %0.2f dB.\n", gain/10.0);
 	}
+
+	return r;
+}
+
+int verbose_gain_set_ext(rtlsdr_dev_t *dev, int lna_gain, int mixer_gain, int vga_gain)
+{
+	int r;
+	r = rtlsdr_set_tuner_gain_mode(dev, 1);
+	if (r < 0) {
+		fprintf(stderr, "WARNING: Failed to enable manual gain.\n");
+		return r;
+	}
+
+	r = rtlsdr_set_lna_gain(dev, lna_gain);
+	if (r != 0) {
+		fprintf(stderr, "WARNING: Failed to set tuner lna gain.\n");
+	} else {
+		fprintf(stderr, "Tuner lna gain set to %d dB.\n", lna_gain);
+	}
+
+	r = rtlsdr_set_mixer_gain(dev, mixer_gain);
+	if (r != 0) {
+		fprintf(stderr, "WARNING: Failed to set tuner mixer gain.\n");
+	} else {
+		fprintf(stderr, "Tuner mixer gain set to %d dB.\n", mixer_gain);
+	}
+
+	r = rtlsdr_set_vga_gain(dev, vga_gain);
+	if (r != 0) {
+		fprintf(stderr, "WARNING: Failed to set tuner vga gain.\n");
+	} else {
+		fprintf(stderr, "Tuner vga gain set to %d dB.\n", vga_gain - 47);
+	}
+
 	return r;
 }
 

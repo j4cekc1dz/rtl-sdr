@@ -100,7 +100,9 @@ struct dongle_state
 	int      dev_index;
 	uint32_t freq;
 	uint32_t rate;
-	int      gain;
+	int      lna_gain;
+	int      mixer_gain;
+	int      vga_gain;
 	uint16_t buf16[MAXIMUM_BUF_LENGTH];
 	uint32_t buf_len;
 	int      ppm_error;
@@ -947,7 +949,9 @@ void frequency_range(struct controller_state *s, char *arg)
 void dongle_init(struct dongle_state *s)
 {
 	s->rate = DEFAULT_SAMPLE_RATE;
-	s->gain = AUTO_GAIN; // tenths of a dB
+	s->lna_gain = AUTO_GAIN; // tenths of a dB
+	s->mixer_gain = 0; // tenths of a dB
+	s->vga_gain = 0; // tenths of a dB
 	s->mute = 0;
 	s->direct_sampling = 0;
 	s->offset_tuning = 0;
@@ -1053,7 +1057,7 @@ int main(int argc, char **argv)
 	output_init(&output);
 	controller_init(&controller);
 
-	while ((opt = getopt(argc, argv, "d:f:g:s:b:l:o:t:r:p:E:F:A:M:hT")) != -1) {
+	while ((opt = getopt(argc, argv, "d:f:g:i:j:s:b:l:o:t:r:p:E:F:A:M:hT")) != -1) {
 		switch (opt) {
 		case 'd':
 			dongle.dev_index = verbose_device_search(optarg);
@@ -1071,7 +1075,13 @@ int main(int argc, char **argv)
 			}
 			break;
 		case 'g':
-			dongle.gain = (int)(atof(optarg) * 10);
+			dongle.lna_gain = (int)(atof(optarg));
+			break;
+		case 'i':
+			dongle.mixer_gain = (int)(atof(optarg));
+			break;
+		case 'j':
+			dongle.vga_gain = (int)(atof(optarg));
 			break;
 		case 'l':
 			demod.squelch_level = (int)atof(optarg);
@@ -1209,11 +1219,11 @@ int main(int argc, char **argv)
 	}
 
 	/* Set the tuner gain */
-	if (dongle.gain == AUTO_GAIN) {
+	if (dongle.lna_gain == AUTO_GAIN) {
 		verbose_auto_gain(dongle.dev);
 	} else {
-		dongle.gain = nearest_gain(dongle.dev, dongle.gain);
-		verbose_gain_set(dongle.dev, dongle.gain);
+		// dongle.gain = nearest_gain(dongle.dev, dongle.gain);
+		verbose_gain_set_ext(dongle.dev, dongle.lna_gain, dongle.mixer_gain, dongle.vga_gain);
 	}
 
 	rtlsdr_set_bias_tee(dongle.dev, enable_biastee);

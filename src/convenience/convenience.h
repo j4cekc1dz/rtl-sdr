@@ -111,6 +111,7 @@ int verbose_auto_gain(rtlsdr_dev_t *dev);
  */
 
 int verbose_gain_set(rtlsdr_dev_t *dev, int gain);
+int verbose_gain_set_ext(rtlsdr_dev_t *dev, int lna_gain, int mixer_gain, int vga_gain);
 
 /*!
  * Set the frequency correction value for the device and report status on stderr.
